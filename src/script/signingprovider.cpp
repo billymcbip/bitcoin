@@ -528,12 +528,12 @@ std::optional<std::vector<std::tuple<int, std::vector<unsigned char>, int>>> Inf
             // Skip script records with nonsensical leaf version.
             if (leaf_ver < 0 || leaf_ver >= 0x100 || leaf_ver & 1) continue;
             // Skip script records with invalid control block sizes.
-            if (!VerifyTaprootControlBlockSize(control)) continue;
+            if (!VerifyTaprootControlBlockSize(control, 1)) continue;
             // Skip script records that don't match the control block.
             if ((control[0] & TAPROOT_LEAF_MASK) != leaf_ver) continue;
             // Skip script records that don't match the provided Merkle root.
             const uint256 leaf_hash = ComputeTapleafHash(leaf_ver, script);
-            const uint256 merkle_root = ComputeTaprootMerkleRoot(control, leaf_hash);
+            const uint256 merkle_root = ComputeTaprootMerkleRoot(control, leaf_hash, 1);
             if (merkle_root != spenddata.merkle_root) continue;
 
             TreeNode* node = &root;

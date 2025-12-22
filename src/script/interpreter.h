@@ -135,6 +135,10 @@ enum class script_verify_flag_name : uint8_t {
     //
     SCRIPT_VERIFY_TAPROOT,
 
+    // Support P2TSH witness programs (BIP360).
+    //
+    SCRIPT_VERIFY_P2TSH,
+
     // Making unknown Taproot leaf versions non-standard
     //
     SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION,
@@ -241,9 +245,11 @@ static constexpr size_t WITNESS_TAPROOT_SIZE = 32;
 static constexpr uint8_t TAPROOT_LEAF_MASK = 0xfe;
 static constexpr uint8_t TAPROOT_LEAF_TAPSCRIPT = 0xc0;
 static constexpr size_t TAPROOT_V1_CONTROL_BASE_SIZE = 33;
+static constexpr size_t TAPROOT_V2_CONTROL_BASE_SIZE = 1;
 static constexpr size_t TAPROOT_CONTROL_NODE_SIZE = 32;
 static constexpr size_t TAPROOT_CONTROL_MAX_NODE_COUNT = 128;
 static constexpr size_t TAPROOT_V1_CONTROL_MAX_SIZE = TAPROOT_V1_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
+static constexpr size_t TAPROOT_V2_CONTROL_MAX_SIZE = TAPROOT_V2_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * TAPROOT_CONTROL_MAX_NODE_COUNT;
 
 extern const HashWriter HASHER_TAPSIGHASH; //!< Hasher with tag "TapSighash" pre-fed to it.
 extern const HashWriter HASHER_TAPLEAF;    //!< Hasher with tag "TapLeaf" pre-fed to it.
@@ -365,7 +371,7 @@ public:
 };
 
 /** Verify that the control block has a valid length (33 + k*32, with k in {0,1,..,128}). */
-bool VerifyTaprootControlBlockSize(std::span<const unsigned char> control);
+bool VerifyTaprootControlBlockSize(std::span<const unsigned char> control, int witversion);
 /** Compute the BIP341 tapleaf hash from leaf version & script. */
 uint256 ComputeTapleafHash(uint8_t leaf_version, std::span<const unsigned char> script);
 /** Compute the BIP341 tapbranch hash from two branches.
@@ -373,7 +379,7 @@ uint256 ComputeTapleafHash(uint8_t leaf_version, std::span<const unsigned char> 
 uint256 ComputeTapbranchHash(std::span<const unsigned char> a, std::span<const unsigned char> b);
 /** Compute the BIP341 taproot script tree Merkle root from control block and leaf hash.
  *  Requires control block to have valid length. */
-uint256 ComputeTaprootMerkleRoot(std::span<const unsigned char> control, const uint256& tapleaf_hash);
+uint256 ComputeTaprootMerkleRoot(std::span<const unsigned char> control, const uint256& tapleaf_hash, int witversion);
 
 bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, script_verify_flags flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptExecutionData& execdata, ScriptError* error = nullptr);
 bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& script, script_verify_flags flags, const BaseSignatureChecker& checker, SigVersion sigversion, ScriptError* error = nullptr);
