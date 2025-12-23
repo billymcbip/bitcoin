@@ -265,7 +265,7 @@ constexpr uint32_t P2WSH_TXOUT_BYTES{8 + 1 + 1 + 33};
 //! Data other than the witness in a transaction. Overhead + vin count + one vin + vout count + one vout + segwit marker
 constexpr uint32_t TX_BODY_LEEWAY_WEIGHT{(TX_OVERHEAD + GetSizeOfCompactSize(1) + TXIN_BYTES_NO_WITNESS + GetSizeOfCompactSize(1) + P2WSH_TXOUT_BYTES) * WITNESS_SCALE_FACTOR + 2};
 //! Maximum possible stack size to spend a Taproot output (excluding the script itself).
-constexpr uint32_t MAX_TAPSCRIPT_SAT_SIZE{GetSizeOfCompactSize(MAX_STACK_SIZE) + (GetSizeOfCompactSize(MAX_TAPMINISCRIPT_STACK_ELEM_SIZE) + MAX_TAPMINISCRIPT_STACK_ELEM_SIZE) * MAX_STACK_SIZE + GetSizeOfCompactSize(TAPROOT_CONTROL_MAX_SIZE) + TAPROOT_CONTROL_MAX_SIZE};
+constexpr uint32_t MAX_TAPSCRIPT_SAT_SIZE{GetSizeOfCompactSize(MAX_STACK_SIZE) + (GetSizeOfCompactSize(MAX_TAPMINISCRIPT_STACK_ELEM_SIZE) + MAX_TAPMINISCRIPT_STACK_ELEM_SIZE) * MAX_STACK_SIZE + GetSizeOfCompactSize(TAPROOT_V1_CONTROL_MAX_SIZE) + TAPROOT_V1_CONTROL_MAX_SIZE};
 /** The maximum size of a script depending on the context. */
 constexpr uint32_t MaxScriptSize(MiniscriptContext ms_ctx)
 {

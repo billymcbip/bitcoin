@@ -174,8 +174,8 @@ CTxDestination DecodeDestination(const std::string& str, const CChainParams& par
                 return CNoDestination();
             }
 
-            if (version == 1 && data.size() == WITNESS_V1_TAPROOT_SIZE) {
-                static_assert(WITNESS_V1_TAPROOT_SIZE == WitnessV1Taproot::size());
+            if (version == 1 && data.size() == WITNESS_TAPROOT_SIZE) {
+                static_assert(WITNESS_TAPROOT_SIZE == WitnessV1Taproot::size());
                 WitnessV1Taproot tap;
                 std::copy(data.begin(), data.end(), tap.begin());
                 return tap;

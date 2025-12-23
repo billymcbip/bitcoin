@@ -479,13 +479,13 @@ TaprootSpendData TaprootBuilder::GetSpendData() const
         // spd.scripts.
         for (const auto& leaf : m_branch[0]->leaves) {
             std::vector<unsigned char> control_block;
-            control_block.resize(TAPROOT_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * leaf.merkle_branch.size());
+            control_block.resize(TAPROOT_V1_CONTROL_BASE_SIZE + TAPROOT_CONTROL_NODE_SIZE * leaf.merkle_branch.size());
             control_block[0] = leaf.leaf_version | (m_parity ? 1 : 0);
             std::copy(m_internal_key.begin(), m_internal_key.end(), control_block.begin() + 1);
             if (leaf.merkle_branch.size()) {
                 std::copy(leaf.merkle_branch[0].begin(),
                           leaf.merkle_branch[0].begin() + TAPROOT_CONTROL_NODE_SIZE * leaf.merkle_branch.size(),
-                          control_block.begin() + TAPROOT_CONTROL_BASE_SIZE);
+                          control_block.begin() + TAPROOT_V1_CONTROL_BASE_SIZE);
             }
             spd.scripts[{leaf.script, leaf.leaf_version}].insert(std::move(control_block));
         }
@@ -537,15 +537,15 @@ std::optional<std::vector<std::tuple<int, std::vector<unsigned char>, int>>> Inf
             if (merkle_root != spenddata.merkle_root) continue;
 
             TreeNode* node = &root;
-            size_t levels = (control.size() - TAPROOT_CONTROL_BASE_SIZE) / TAPROOT_CONTROL_NODE_SIZE;
+            size_t levels = (control.size() - TAPROOT_V1_CONTROL_BASE_SIZE) / TAPROOT_CONTROL_NODE_SIZE;
             for (size_t depth = 0; depth < levels; ++depth) {
                 // Can't descend into a node which we already know is a leaf.
                 if (node->explored && !node->inner) return std::nullopt;
 
                 // Extract partner hash from Merkle branch in control block.
                 uint256 hash;
-                std::copy(control.begin() + TAPROOT_CONTROL_BASE_SIZE + (levels - 1 - depth) * TAPROOT_CONTROL_NODE_SIZE,
-                          control.begin() + TAPROOT_CONTROL_BASE_SIZE + (levels - depth) * TAPROOT_CONTROL_NODE_SIZE,
+                std::copy(control.begin() + TAPROOT_V1_CONTROL_BASE_SIZE + (levels - 1 - depth) * TAPROOT_CONTROL_NODE_SIZE,
+                          control.begin() + TAPROOT_V1_CONTROL_BASE_SIZE + (levels - depth) * TAPROOT_CONTROL_NODE_SIZE,
                           hash.begin());
 
                 if (node->sub[0]) {
