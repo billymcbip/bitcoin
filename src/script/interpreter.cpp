@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <util/hasher.h>
 #include <script/interpreter.h>
 
 #include <crypto/ripemd160.h>
@@ -12,6 +13,8 @@
 #include <script/script.h>
 #include <tinyformat.h>
 #include <uint256.h>
+
+#include <unordered_set>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -1214,6 +1217,13 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                 }
                 break;
 
+                case OP_CHECKCONSOLIDATION:
+                {
+                    if (sigversion != SigVersion::TAPSCRIPT) return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
+                    stack.push_back(checker.CheckConsolidation() ? vchTrue : vchFalse);
+                }
+                break;
+
                 default:
                     return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
             }
@@ -1408,6 +1418,23 @@ void PrecomputedTransactionData::Init(const T& txTo, std::vector<CTxOut>&& spent
     if (!m_spent_outputs.empty()) {
         assert(m_spent_outputs.size() == txTo.vin.size());
         m_spent_outputs_ready = true;
+    }
+
+    // Precompute consolidation flags
+    if (m_spent_outputs_ready) {
+        m_consolidation_markers.resize(m_spent_outputs.size());
+        std::unordered_set<uint256, SaltedUint256Hasher> seen;
+        for (size_t i = 0; i < m_spent_outputs.size(); ++i) {
+            uint256 scriptHash = Hash(m_spent_outputs[i].scriptPubKey);
+            if (seen.contains(scriptHash)) {
+                m_consolidation_markers[i] = true;
+            } else {
+                m_consolidation_markers[i] = false;
+                seen.insert(scriptHash);
+            }
+        }
+    } else {
+        m_consolidation_markers.clear();
     }
 
     // Determine which precomputation-impacting features this transaction uses.
@@ -1825,6 +1852,13 @@ bool GenericTransactionSignatureChecker<T>::CheckSequence(const CScriptNum& nSeq
     return true;
 }
 
+template <class T>
+bool GenericTransactionSignatureChecker<T>::CheckConsolidation() const
+{
+    assert(txdata && nIn < txdata->m_consolidation_markers.size());
+    return txdata->m_consolidation_markers[nIn];
+}
+
 // explicit instantiation
 template class GenericTransactionSignatureChecker<CTransaction>;
 template class GenericTransactionSignatureChecker<CMutableTransaction>;
@@ -1843,7 +1877,7 @@ static bool ExecuteWitnessScript(const std::span<const valtype>& stack_span, con
                 return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
             }
             // New opcodes will be listed here. May use a different sigversion to modify existing opcodes.
-            if (IsOpSuccess(opcode)) {
+            if (IsOpSuccess(opcode) || (opcode == OP_CHECKCONSOLIDATION && (flags & SCRIPT_VERIFY_CC) == 0)) {
                 if (flags & SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS) {
                     return set_error(serror, SCRIPT_ERR_DISCOURAGE_OP_SUCCESS);
                 }
