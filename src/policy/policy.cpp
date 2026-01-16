@@ -307,8 +307,8 @@ bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
         // Check policy limits for Taproot spends:
         // - MAX_STANDARD_TAPSCRIPT_STACK_ITEM_SIZE limit for stack item size
         // - No annexes
-        if (witnessversion == 1 && witnessprogram.size() == WITNESS_V1_TAPROOT_SIZE && !p2sh) {
-            // Taproot spend (non-P2SH-wrapped, version 1, witness program size 32; see BIP 341)
+        if ((witnessversion == 1 || witnessversion == 2) && witnessprogram.size() == WITNESS_TAPROOT_SIZE && !p2sh) {
+            // Taproot spend (non-P2SH-wrapped, version 1 or 2, witness program size 32; see BIPs 341 and 360)
             std::span stack{tx.vin[i].scriptWitness.stack};
             if (stack.size() >= 2 && !stack.back().empty() && stack.back()[0] == ANNEX_TAG) {
                 // Annexes are nonstandard as long as no semantics are defined for them.
@@ -318,7 +318,7 @@ bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
                 // Script path spend (2 or more stack elements after removing optional annex)
                 const auto& control_block = SpanPopBack(stack);
                 SpanPopBack(stack); // Ignore script
-                if (control_block.empty()) return false; // Empty control block is invalid
+                if (!VerifyTaprootControlBlockSize(control_block, witnessversion)) return false;
                 if ((control_block[0] & TAPROOT_LEAF_MASK) == TAPROOT_LEAF_TAPSCRIPT) {
                     // Leaf version 0xc0 (aka Tapscript, see BIP 342)
                     for (const auto& item : stack) {
@@ -327,6 +327,10 @@ bool IsWitnessStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs)
                 }
             } else if (stack.size() == 1) {
                 // Key path spend (1 stack element after removing optional annex)
+                if (witnessversion == 2) {
+                    // Key path spend is unsupported in P2TSH
+                    return false;
+                }
                 // (no policy rules apply)
             } else {
                 // 0 stack elements; this is already invalid by consensus rules
