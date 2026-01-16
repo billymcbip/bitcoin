@@ -209,6 +209,9 @@ enum opcodetype
     // Opcode added by BIP 342 (Tapscript)
     OP_CHECKSIGADD = 0xba,
 
+    // Opcode added by BIP-CC (Tapscript)
+    OP_CHECKCONSOLIDATION = 0xbb,
+
     OP_INVALIDOPCODE = 0xff,
 };
 
@@ -598,7 +601,7 @@ public:
     explicit CScriptID(const uint160& in) : BaseHash(in) {}
 };
 
-/** Test for OP_SUCCESSx opcodes as defined by BIP342. */
+/** Test for current OP_SUCCESSx opcodes. */
 bool IsOpSuccess(const opcodetype& opcode);
 
 bool CheckMinimalPush(const std::vector<unsigned char>& data, opcodetype opcode);
