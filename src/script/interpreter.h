@@ -135,6 +135,10 @@ enum class script_verify_flag_name : uint8_t {
     //
     SCRIPT_VERIFY_TAPROOT,
 
+    // Verify OP_CHECKCONSOLIDATION
+    //
+    SCRIPT_VERIFY_CC,
+
     // Making unknown Taproot leaf versions non-standard
     //
     SCRIPT_VERIFY_DISCOURAGE_UPGRADABLE_TAPROOT_VERSION,
@@ -180,6 +184,9 @@ struct PrecomputedTransactionData
     std::vector<CTxOut> m_spent_outputs;
     //! Whether m_spent_outputs is initialized.
     bool m_spent_outputs_ready = false;
+
+    // BIP-CC precomputed consolidation markers.
+    std::vector<bool> m_consolidation_markers;
 
     PrecomputedTransactionData() = default;
 
@@ -294,6 +301,11 @@ public:
          return false;
     }
 
+    virtual bool CheckConsolidation() const
+    {
+        return false;
+    }
+
     virtual ~BaseSignatureChecker() = default;
 };
 
@@ -331,6 +343,7 @@ public:
     bool CheckSchnorrSignature(std::span<const unsigned char> sig, std::span<const unsigned char> pubkey, SigVersion sigversion, ScriptExecutionData& execdata, ScriptError* serror = nullptr) const override;
     bool CheckLockTime(const CScriptNum& nLockTime) const override;
     bool CheckSequence(const CScriptNum& nSequence) const override;
+    bool CheckConsolidation() const override;
 };
 
 using TransactionSignatureChecker = GenericTransactionSignatureChecker<CTransaction>;
@@ -361,6 +374,11 @@ public:
     bool CheckSequence(const CScriptNum& nSequence) const override
     {
         return m_checker.CheckSequence(nSequence);
+    }
+
+    bool CheckConsolidation() const override
+    {
+        return m_checker.CheckConsolidation();
     }
 };
 
