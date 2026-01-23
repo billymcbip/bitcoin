@@ -65,9 +65,6 @@ enum class script_verify_flag_name : uint8_t {
     // verify dummy stack item consumed by CHECKMULTISIG is of zero-length (BIP62 rule 7).
     SCRIPT_VERIFY_NULLDUMMY,
 
-    // Using a non-push operator in the scriptSig causes script failure (BIP62 rule 2).
-    SCRIPT_VERIFY_SIGPUSHONLY,
-
     // Require minimal encodings for all push operations (OP_0... OP_16, OP_1NEGATE where possible, direct
     // pushes up to 75 bytes, OP_PUSHDATA up to 255 bytes, OP_PUSHDATA2 for anything larger). Evaluating
     // any other push causes the script to fail (BIP62 rule 3).

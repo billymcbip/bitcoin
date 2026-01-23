@@ -2009,10 +2009,6 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
 
     set_error(serror, SCRIPT_ERR_UNKNOWN_ERROR);
 
-    if ((flags & SCRIPT_VERIFY_SIGPUSHONLY) != 0 && !scriptSig.IsPushOnly()) {
-        return set_error(serror, SCRIPT_ERR_SIG_PUSHONLY);
-    }
-
     // scriptSig and scriptPubKey must be evaluated sequentially on the same stack
     // rather than being simply concatenated (see CVE-2010-5141)
     std::vector<std::vector<unsigned char> > stack, stackCopy;
@@ -2173,7 +2169,6 @@ const std::map<std::string, script_verify_flag_name>& ScriptFlagNamesToEnum()
         FLAG_NAME(STRICTENC),
         FLAG_NAME(DERSIG),
         FLAG_NAME(LOW_S),
-        FLAG_NAME(SIGPUSHONLY),
         FLAG_NAME(MINIMALDATA),
         FLAG_NAME(NULLDUMMY),
         FLAG_NAME(DISCOURAGE_UPGRADABLE_NOPS),
